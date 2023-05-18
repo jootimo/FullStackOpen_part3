@@ -47,7 +47,14 @@ app.get('/api/persons/:id', (req, res) => {
     } else {
         res.status(404)
            .send({ error: `No person found with id ${id}` })
-    }  
+    }
+})
+
+app.delete('/api/persons/:id', (req, res) => {
+    const id = Number(req.params.id)
+    persons = persons.filter(p => p.id != id)
+    res.status(200)
+       .send()
 })
 
 const unknownEndpoint = (request, response) => {
