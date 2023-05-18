@@ -46,7 +46,7 @@ app.get('/api/persons/:id', (req, res) => {
         res.json(person)
     } else {
         res.status(404)
-           .send({ error: `No person found with id ${id}` })
+           .json({ error: `No person found with id ${id}` })
     }
 })
 
@@ -55,6 +55,40 @@ app.delete('/api/persons/:id', (req, res) => {
     persons = persons.filter(p => p.id != id)
     res.status(200)
        .send()
+})
+
+app.post('/api/persons', (req, res) => {
+    console.log(req.body)
+    const body = req.body
+    if(!body) {
+        return res.status(400)
+                  .json({error: 'Content missing'})
+    }
+
+    if(!body.name) {
+        return res.status(400)
+                  .json({error: 'Name missing from input'}) 
+    }
+    if(!body.number) {
+        return res.status(400)
+                  .json({error: 'Number missing from input'}) 
+    }
+
+    const nameExists = persons.filter(p => p.name === body.name).length > 0
+    if(nameExists) {
+        return res.status(400)
+                  .json({error: `${body.name} is already added`}) 
+    }
+
+    const id = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
+    const newPerson = {
+        name: body.name,
+        number: body.number,
+        id: id
+    } 
+    persons = persons.concat(newPerson)
+
+    res.json(newPerson)
 })
 
 const unknownEndpoint = (request, response) => {
