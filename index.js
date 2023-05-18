@@ -1,7 +1,9 @@
 const express = require('express')
-var morgan = require('morgan')
-const app = express()
+const cors = require('cors')
+const morgan = require('morgan')
 
+const app = express()
+app.use(cors())
 app.use(express.json())
 
 morgan.token('person', (req, res) => JSON.stringify(req.body))
@@ -29,10 +31,6 @@ let persons = [
         id: 4
     }
 ]
-
-app.get('/', (req, res) => {
-    res.send('<h1>Phonebook</h1>')
-})
 
 app.get('/info', (req, res) => {
     res.send(`<p>Phonebook has info for ${persons.length} people</p>
@@ -101,6 +99,6 @@ const unknownEndpoint = (request, response) => {
   
 app.use(unknownEndpoint)
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT)
 console.log(`Server running on port ${PORT}`)
