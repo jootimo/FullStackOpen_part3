@@ -1,6 +1,9 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
+
+const PersonModel = require('./models/person')  
 
 const app = express()
 app.use(cors())
@@ -10,54 +13,38 @@ app.use(express.static('build'))
 morgan.token('person', (req, res) => JSON.stringify(req.body))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :person'))
 
-let persons = [
-    {
-        name: "Arto Hellas",
-        number: "040-123456",
-        id: 1
-    },
-    {
-        name: "Ada Lovelace",
-        number: "39-44-5323523",
-        id: 2
-    },
-    {
-        name: "Dan Abramov",
-        number: "12-43-234345",
-        id: 3
-    },
-    {
-        name: "Mary Poppendieck",
-        number: "39-23-6423122",
-        id: 4
-    }
-]
-
 app.get('/info', (req, res) => {
-    res.send(`<p>Phonebook has info for ${persons.length} people</p>
-              <p>${new Date()}</p>`)
+    PersonModel.find({}).then(persons => {
+        res.send(`<p>Phonebook has info for ${persons.length} people</p>
+                  <p>${new Date()}</p>`)
+    })
 })
 
 app.get('/api/persons', (req, res) => {
-    res.json(persons)
+    PersonModel.find({}).then(persons => {
+        res.json(persons)
+    })
 })
 
 app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    const person  = persons.find(note => note.id === id)
-    if(person) {
-        res.json(person)
-    } else {
-        res.status(404)
-           .json({ error: `No person found with id ${id}` })
-    }
+    const personId = Number(req.params.id)
+    PersonModel.findById(personId)
+        .then(person => {
+            res.json(person)
+        })
+        .catch(error => {
+            res.status(404)
+               .json({ error: `No person found with id ${personId}` })
+        })
 })
 
 app.delete('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id)
-    persons = persons.filter(p => p.id != id)
-    res.status(200)
-       .send()
+    PersonModel.findByIdAndRemove(id)
+        .then(deleteResult => {
+            res.status(204).end()
+        })
+        .catch(error => next(error))
 })
 
 app.post('/api/persons', (req, res) => {
@@ -77,21 +64,22 @@ app.post('/api/persons', (req, res) => {
                   .json({error: 'Number missing from input'}) 
     }
 
-    const nameExists = persons.filter(p => p.name === body.name).length > 0
-    if(nameExists) {
-        return res.status(400)
-                  .json({error: `${body.name} is already added`}) 
-    }
+    //PersonModel.find({name: body.name})
+    //    .then(person => {
+    //        return res.status(400)
+    //                .json({error: `${body.name} is already added`}) 
+    //    })
+    //    .catch(error => next(error))
 
-    const id = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
-    const newPerson = {
+    const newPerson = new PersonModel({
         name: body.name,
-        number: body.number,
-        id: id
-    } 
-    persons = persons.concat(newPerson)
+        number: body.number
+    })
 
-    res.json(newPerson)
+    newPerson.save()
+        .then(saveResult => {
+            res.json(newPerson)
+        })
 })
 
 const unknownEndpoint = (request, response) => {
