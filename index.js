@@ -81,6 +81,35 @@ app.post('/api/persons', (req, res) => {
         })
 })
 
+app.put('/api/persons/:id', (req, res, next) => {
+    console.log('body:', req.body)
+    const body = req.body
+    if(!body) {
+        return res.status(400)
+                  .json({error: 'Content missing'})
+    }
+
+    if(!body.name) {
+        return res.status(400)
+                  .json({error: 'Name missing from input'}) 
+    }
+    if(!body.number) {
+        return res.status(400)
+                  .json({error: 'Number missing from input'}) 
+    }
+
+    const person = {
+        name: body.name,
+        number: body.number
+    }
+
+    PersonModel.findByIdAndUpdate(req.params.id, person, { new: true })
+        .then(updatedPerson => {
+            res.json(updatedPerson)
+        })
+        .catch(error => next(error))
+})
+
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
   }
